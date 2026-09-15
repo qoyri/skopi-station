@@ -65,7 +65,10 @@
                         </TextBlock.Style>
                     </TextBlock>
 
-                    <StackPanel DataContext="{Binding Editor}">
+                    <!-- The container gets an error adorner of its own once a field inside it is
+                         invalid, which draws a stray red rule across the bottom of the form.
+                         Only the input controls should carry one. -->
+                    <StackPanel DataContext="{Binding Editor}" Validation.ErrorTemplate="{x:Null}">
                         <StackPanel.Style>
                             <Style TargetType="StackPanel">
                                 <Setter Property="Visibility" Value="Visible" />

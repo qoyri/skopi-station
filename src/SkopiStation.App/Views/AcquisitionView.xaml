@@ -96,7 +96,9 @@
                     <TextBlock Text="Manual entry" FontSize="16" FontWeight="SemiBold" Margin="0,16,0,0" />
                     <TextBlock Text="Recorded with Source = Manual." Opacity="0.5" FontSize="11" />
 
-                    <StackPanel DataContext="{Binding ManualEntry}">
+                    <!-- See PatientListView: without this the container draws a stray red rule of
+                         its own as soon as a field inside it is invalid. -->
+                    <StackPanel DataContext="{Binding ManualEntry}" Validation.ErrorTemplate="{x:Null}">
                         <TextBlock Text="Kind" Style="{StaticResource FieldLabel}" />
                         <ComboBox ItemsSource="{Binding Kinds}" SelectedItem="{Binding Kind}" />
 
