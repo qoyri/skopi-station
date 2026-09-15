@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "SkopiStation.App": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}

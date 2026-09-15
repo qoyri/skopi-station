@@ -1,0 +1,22 @@
+<Window x:Class="SkopiStation.App.Views.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:SkopiStation.App.ViewModels"
+        mc:Ignorable="d"
+        d:DataContext="{d:DesignInstance viewModels:ShellViewModel}"
+        Title="skopi-station" Height="360" Width="560"
+        WindowStartupLocation="CenterScreen">
+    <StackPanel Margin="24" VerticalAlignment="Center">
+        <TextBlock Text="skopi-station" FontSize="26" FontWeight="SemiBold" />
+        <TextBlock Text="Measurement entry station" Opacity="0.6" Margin="0,2,0,20" />
+
+        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" />
+
+        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+            <TextBlock Text="{Binding PatientCount, StringFormat='{}{0} patients'}" Margin="0,0,16,0" />
+            <TextBlock Text="{Binding MeasurementCount, StringFormat='{}{0} measurements'}" />
+        </StackPanel>
+    </StackPanel>
+</Window>
