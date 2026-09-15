@@ -1,0 +1,189 @@
+<UserControl x:Class="SkopiStation.App.Views.PatientListView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:converters="clr-namespace:SkopiStation.App.Converters"
+             xmlns:viewModels="clr-namespace:SkopiStation.App.ViewModels"
+             mc:Ignorable="d"
+             d:DataContext="{d:DesignInstance viewModels:PatientListViewModel}"
+             d:DesignHeight="600" d:DesignWidth="1000">
+
+    <UserControl.Resources>
+        <converters:OutOfRangeBrushConverter x:Key="OutOfRangeBrush" />
+
+        <Style x:Key="FieldLabel" TargetType="TextBlock">
+            <Setter Property="Opacity" Value="0.6" />
+            <Setter Property="Margin" Value="0,10,0,2" />
+        </Style>
+
+        <!-- Messages published through INotifyDataErrorInfo. They sit in the normal layout flow
+             rather than in a Validation.ErrorTemplate adorner, so they are laid out with the form
+             and remain reachable to accessibility tools. The (Validation.Errors)/ErrorContent
+             syntax binds to the current item of the collection, which yields an empty string
+             instead of a binding failure when the field is valid. -->
+        <Style x:Key="FieldError" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#C0392B" />
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+            <Setter Property="Margin" Value="0,2,0,0" />
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+
+    <Grid Margin="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <DockPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock DockPanel.Dock="Left" Text="Search" VerticalAlignment="Center"
+                       Margin="0,0,8,0" Opacity="0.6" />
+            <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}"
+                     ToolTip="Filters on last name, first name and record number" Padding="4,3" />
+        </DockPanel>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" MinWidth="380" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="400" MinWidth="300" />
+            </Grid.ColumnDefinitions>
+
+            <DataGrid Grid.Column="0"
+                      ItemsSource="{Binding PatientsView}"
+                      SelectedItem="{Binding SelectedPatient}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserSortColumns="True"
+                      SelectionMode="Single"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Record" Binding="{Binding RecordNumber}" Width="100" />
+                    <DataGridTextColumn Header="Last name" Binding="{Binding LastName}" Width="*" />
+                    <DataGridTextColumn Header="First name" Binding="{Binding FirstName}" Width="*" />
+                    <DataGridTextColumn Header="Birth date" Binding="{Binding BirthDate, StringFormat=d}" Width="110" />
+                    <DataGridTextColumn Header="Measurements" Binding="{Binding MeasurementCount}" Width="110" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Stretch" Background="Transparent" />
+
+            <ScrollViewer Grid.Column="2" VerticalScrollBarVisibility="Auto">
+                <StackPanel>
+                    <TextBlock Text="Select a patient to see their details." Opacity="0.6" TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedPatient}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Visible" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <StackPanel DataContext="{Binding Editor}">
+                        <StackPanel.Style>
+                            <Style TargetType="StackPanel">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLoaded}" Value="False">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </StackPanel.Style>
+
+                        <TextBlock Text="Identity" FontSize="16" FontWeight="SemiBold" />
+
+                        <TextBlock Text="Record number" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="RecordNumberBox"
+                                 Text="{Binding RecordNumber, UpdateSourceTrigger=PropertyChanged,
+                                                ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource FieldError}"
+                                   Text="{Binding ElementName=RecordNumberBox,
+                                                  Path=(Validation.Errors)/ErrorContent}" />
+
+                        <TextBlock Text="Last name" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="LastNameBox"
+                                 Text="{Binding LastName, UpdateSourceTrigger=PropertyChanged,
+                                                ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource FieldError}"
+                                   Text="{Binding ElementName=LastNameBox,
+                                                  Path=(Validation.Errors)/ErrorContent}" />
+
+                        <TextBlock Text="First name" Style="{StaticResource FieldLabel}" />
+                        <TextBox x:Name="FirstNameBox"
+                                 Text="{Binding FirstName, UpdateSourceTrigger=PropertyChanged,
+                                                ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource FieldError}"
+                                   Text="{Binding ElementName=FirstNameBox,
+                                                  Path=(Validation.Errors)/ErrorContent}" />
+
+                        <TextBlock Text="Birth date" Style="{StaticResource FieldLabel}" />
+                        <DatePicker x:Name="BirthDatePicker"
+                                    SelectedDate="{Binding BirthDate, UpdateSourceTrigger=PropertyChanged,
+                                                          ValidatesOnNotifyDataErrors=True}" />
+                        <TextBlock Style="{StaticResource FieldError}"
+                                   Text="{Binding ElementName=BirthDatePicker,
+                                                  Path=(Validation.Errors)/ErrorContent}" />
+
+                        <StackPanel Orientation="Horizontal" Margin="0,16,0,0">
+                            <Button Content="Save" Command="{Binding SaveCommand}" Padding="16,4" />
+                            <TextBlock Text="{Binding StatusMessage}" VerticalAlignment="Center"
+                                       Margin="12,0,0,0" Opacity="0.7" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </StackPanel>
+
+                    <TextBlock Text="Measurements" FontSize="16" FontWeight="SemiBold" Margin="0,24,0,6">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible" />
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding SelectedPatient}" Value="{x:Null}">
+                                        <Setter Property="Visibility" Value="Collapsed" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <ItemsControl ItemsSource="{Binding Measurements}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Grid Margin="0,3">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="110" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{Binding TakenAt, StringFormat=d}" Opacity="0.6" />
+                                    <TextBlock Grid.Column="1" Text="{Binding Kind}" />
+                                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                                        <TextBlock Text="{Binding Value}" FontWeight="SemiBold"
+                                                   Foreground="{Binding IsOutOfRange,
+                                                                Converter={StaticResource OutOfRangeBrush}}" />
+                                        <TextBlock Text="{Binding Unit}" Margin="4,0,0,0"
+                                                   Foreground="{Binding IsOutOfRange,
+                                                                Converter={StaticResource OutOfRangeBrush}}" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <TextBlock Grid.Row="2" Text="{Binding StatusMessage}" Margin="0,10,0,0" Opacity="0.6" />
+    </Grid>
+</UserControl>

@@ -1,28 +1,21 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SkopiStation.Data;
 
 namespace SkopiStation.App.ViewModels;
 
 /// <summary>
-/// Shell of the application. At this stage it only reports the state of the database, which is the
-/// acceptance criterion for the first milestone; the patient and acquisition screens replace this
-/// content in the following milestones.
+/// Shell of the application: prepares the database, then hands over to the patient screen.
 /// </summary>
 public sealed partial class ShellViewModel(
     DatabaseInitializer databaseInitializer,
-    IDbContextFactory<SkopiStationDbContext> contextFactory,
+    PatientListViewModel patients,
     ILogger<ShellViewModel> logger) : ObservableObject
 {
     [ObservableProperty]
     private string status = "Starting…";
 
-    [ObservableProperty]
-    private int patientCount;
-
-    [ObservableProperty]
-    private int measurementCount;
+    public PatientListViewModel Patients { get; } = patients;
 
     public async Task InitializeAsync(CancellationToken ct)
     {
@@ -31,12 +24,7 @@ public sealed partial class ShellViewModel(
             Status = "Applying migrations and seeding…";
             await databaseInitializer.InitializeAsync(ct);
 
-            // A context per operation, created from the factory and disposed straight away: no
-            // long-lived context is ever held by a ViewModel.
-            await using var context = await contextFactory.CreateDbContextAsync(ct);
-            PatientCount = await context.Patients.CountAsync(ct);
-            MeasurementCount = await context.Measurements.CountAsync(ct);
-
+            await Patients.LoadAsync(ct);
             Status = "Database ready.";
         }
         catch (Exception exception)

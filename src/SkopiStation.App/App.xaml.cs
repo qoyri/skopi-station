@@ -36,6 +36,8 @@ public partial class App : Application
 
                 services.AddSkopiStationData(connectionString);
                 services.AddSingleton<ShellViewModel>();
+                services.AddSingleton<PatientListViewModel>();
+                services.AddSingleton<PatientEditorViewModel>();
                 services.AddSingleton<MainWindow>();
             });
 
