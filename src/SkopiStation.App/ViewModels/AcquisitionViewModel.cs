@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -56,15 +57,13 @@ public sealed partial class AcquisitionViewModel : ObservableObject, IDisposable
         device.MeasurementReceived += OnMeasurementReceived;
         device.StateChanged += OnStateChanged;
 
-        patients.PropertyChanged += (_, e) =>
-        {
-            if (e.PropertyName == nameof(PatientListViewModel.SelectedPatient))
-            {
-                OnPropertyChanged(nameof(SelectedPatientName));
-                AttachCommand.NotifyCanExecuteChanged();
-            }
-        };
+        // Named handler rather than a lambda: the patient list is another object's, and an
+        // anonymous handler could not be detached, which would keep this ViewModel alive for as
+        // long as the list. Both happen to be singletons today, so nothing would leak — but that
+        // is a property of the registration, not of this class, and it would change silently.
+        patients.PropertyChanged += OnPatientsPropertyChanged;
 
+        // ManualEntry is owned here, so its subscription cannot outlive this instance.
         ManualEntry.PropertyChanged += (_, e) =>
         {
             if (e.PropertyName == nameof(ManualEntryViewModel.CanSubmit))
@@ -91,6 +90,7 @@ public sealed partial class AcquisitionViewModel : ObservableObject, IDisposable
     {
         device.MeasurementReceived -= OnMeasurementReceived;
         device.StateChanged -= OnStateChanged;
+        patients.PropertyChanged -= OnPatientsPropertyChanged;
     }
 
     [RelayCommand]
@@ -195,6 +195,17 @@ public sealed partial class AcquisitionViewModel : ObservableObject, IDisposable
     }
 
     private bool CanAddManualEntry() => ManualEntry.CanSubmit;
+
+    private void OnPatientsPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName != nameof(PatientListViewModel.SelectedPatient))
+        {
+            return;
+        }
+
+        OnPropertyChanged(nameof(SelectedPatientName));
+        AttachCommand.NotifyCanExecuteChanged();
+    }
 
     private void OnMeasurementReceived(object? sender, MeasurementReceivedEventArgs e) =>
         dispatcher.Post(() =>

@@ -252,4 +252,35 @@ public class AcquisitionViewModelTests
 
         acquisition.ReceivedMeasurements.Should().BeEmpty();
     }
+
+    /// <summary>
+    /// The patient list belongs to another ViewModel, so its event holds a reference to this one.
+    /// Both are singletons today and nothing would leak, but that is a property of how they are
+    /// registered rather than of this class; the detach is asserted so it cannot be lost.
+    /// </summary>
+    [Fact]
+    public async Task Disposing_stops_listening_to_the_patient_list()
+    {
+        var (acquisition, _, _, patients) = await CreateAsync();
+        var notified = new List<string?>();
+        acquisition.PropertyChanged += (_, e) => notified.Add(e.PropertyName);
+
+        acquisition.Dispose();
+        patients.SelectedPatient = FirstPatient(patients);
+
+        notified.Should().NotContain(nameof(AcquisitionViewModel.SelectedPatientName));
+    }
+
+    [Fact]
+    public async Task Selecting_a_patient_refreshes_the_name_shown_on_the_acquisition_screen()
+    {
+        var (acquisition, _, _, patients) = await CreateAsync();
+        var notified = new List<string?>();
+        acquisition.PropertyChanged += (_, e) => notified.Add(e.PropertyName);
+
+        patients.SelectedPatient = FirstPatient(patients);
+
+        notified.Should().Contain(nameof(AcquisitionViewModel.SelectedPatientName));
+        acquisition.SelectedPatientName.Should().Contain("MOREAU");
+    }
 }
