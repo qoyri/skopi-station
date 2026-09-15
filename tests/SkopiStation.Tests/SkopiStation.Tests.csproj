@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\SkopiStation.App\SkopiStation.App.csproj" />
     <ProjectReference Include="..\..\src\SkopiStation.Data\SkopiStation.Data.csproj" />
+    <ProjectReference Include="..\..\src\SkopiStation.Devices\SkopiStation.Devices.csproj" />
     <ProjectReference Include="..\..\src\SkopiStation.Domain\SkopiStation.Domain.csproj" />
   </ItemGroup>
 
