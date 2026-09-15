@@ -52,6 +52,7 @@ tests/
   SkopiStation.Tests/           tests unitaires (domaine, ViewModels, parsing série)
 tools/
   SerialSimulator/       console qui émet des trames sur un port série
+  install-sqlexpress.ps1 installation scriptée de SQL Server Express (élévation requise)
 ```
 
 ### Cibles
