@@ -4,6 +4,9 @@
     <TargetFramework>net8.0-windows</TargetFramework>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <!-- The patient list ViewModel filters and sorts through ICollectionView, which lives in
+         WindowsBase; testing it means referencing the WPF assemblies. -->
+    <UseWPF>true</UseWPF>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,6 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\SkopiStation.App\SkopiStation.App.csproj" />
     <ProjectReference Include="..\..\src\SkopiStation.Data\SkopiStation.Data.csproj" />
     <ProjectReference Include="..\..\src\SkopiStation.Domain\SkopiStation.Domain.csproj" />
   </ItemGroup>
