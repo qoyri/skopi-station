@@ -3,6 +3,16 @@
 Poste de saisie de mesures ophtalmologiques : application WPF de démonstration
 technique sur .NET 8, Entity Framework Core et acquisition par liaison série.
 
+## En bref
+
+Si vous ne lisez qu'une chose, lisez ces trois décisions :
+
+- [**Marshalling par `Dispatcher`**](#1-marshalling-vers-le-thread-ui--dispatcher-plutôt-quenablecollectionsynchronization) plutôt que `EnableCollectionSynchronization` : à quelques trames par seconde, le coût d'un saut est nul et tout se passe sur le thread UI, au lieu d'une discipline de verrouillage à tenir partout.
+- [**`NumberStyles.Number` est un piège**](#parsing-numérique--pourquoi-pas-numberstylesnumber) : il autorise le séparateur de milliers, qui est la virgule en culture invariante. `2,5` devient `25` — une longueur axiale plausible, dans la plage de référence, stockée sans le moindre signal.
+- [**Fermer le port avant d'attendre la boucle de lecture**](#déconnexion-série--fermer-le-port-avant-dattendre-la-boucle) : `SerialPort.BaseStream` ignore le `CancellationToken`, et l'ordre inverse gèle l'interface au clic sur *Disconnect*.
+
+Les deux dernières sont des bugs réels, trouvés en exerçant le code et non en le relisant.
+
 ## Pourquoi ce projet
 
 Transposer vers WPF des acquis XAML et MVVM constitués sous .NET MAUI, et y
@@ -19,11 +29,26 @@ fonctionnalités.
 
 ## Captures d'écran
 
-| Fichier attendu | Contenu |
-|---|---|
-| `docs/screenshots/patients.png` | Onglet Patients : la grille, une recherche active dans le champ, une ligne sélectionnée et son panneau de détail à droite avec l'historique des mesures |
-| `docs/screenshots/validation.png` | Le formulaire d'identité avec un numéro de dossier invalide : message d'erreur sous le champ et bouton *Save* désactivé |
-| `docs/screenshots/acquisition.png` | Onglet Acquisition connecté : quelques mesures reçues dont au moins une hors plage affichée en rouge, et le panneau de rattachement à droite |
+### Liste des patients
+
+Recherche filtrant sur nom, prénom et numéro de dossier via `ICollectionView`,
+tri par clic sur en-tête, détail et historique du patient sélectionné.
+
+![Liste des patients](docs/screenshots/patients.png)
+
+### Validation de l'identité
+
+Numéro de dossier invalide : le message apparaît sous le champ et le bouton
+*Save* reste désactivé tant que le formulaire porte une erreur.
+
+![Validation du formulaire d'identité](docs/screenshots/validation.png)
+
+### Acquisition
+
+Mesures reçues en direct depuis l'appareil, celles qui sortent de la plage de
+référence signalées en rouge, et rattachement au patient sélectionné.
+
+![Écran d'acquisition](docs/screenshots/acquisition.png)
 
 ## Structure de la solution
 
@@ -92,26 +117,24 @@ dotnet run --project src/SkopiStation.App
 Au premier démarrage, l'application applique les migrations et peuple la base.
 Le second démarrage ne rejoue pas le peuplement.
 
-### Démarrer sans matériel
+### Appareil simulé par défaut
 
-L'écran d'acquisition fonctionne sans appareil ni port série. Dans
-`appsettings.json` :
+`appsettings.json` est livré avec `Device:Mode` sur `"Fake"` : l'écran
+d'acquisition fonctionne sans appareil ni port série dès le premier lancement,
+ce qui évite d'avoir à installer un pilote de ports virtuels pour voir tourner la
+démonstration.
 
-```json
-"Device": { "Mode": "Fake" }
-```
-
-`FakeMeasurementDevice` émet alors un script de trames en mémoire, contenant
+`FakeMeasurementDevice` émet un script de trames en mémoire, contenant
 volontairement une mesure hors plage de référence et une trame malformée, pour
 que les deux comportements soient visibles. Ces trames passent par exactement le
 même chemin de code que celles d'un port série, rejet des trames invalides
 compris.
 
-La valeur se surcharge aussi par variable d'environnement, sans modifier le
-fichier :
+Le mode réel est `"Serial"`. La valeur se surcharge par variable
+d'environnement, sans modifier le fichier :
 
 ```powershell
-$env:Device__Mode = 'Fake'; dotnet run --project src/SkopiStation.App
+$env:Device__Mode = 'Serial'; dotnet run --project src/SkopiStation.App
 ```
 
 ### Avec un port série réel
@@ -126,8 +149,8 @@ dotnet run --project tools/SerialSimulator -- COM3 1000
 
 L'argument optionnel est l'intervalle en millisecondes. Le simulateur émet
 délibérément une trame malformée sur dix : unité incorrecte, champ manquant,
-type inconnu ou valeur physiquement impossible. Laissez `Device:Mode` sur
-`Serial`, lancez l'application, choisissez `COM4` dans la liste des ports et
+type inconnu ou valeur physiquement impossible. Passez `Device:Mode` à
+`"Serial"`, lancez l'application, choisissez `COM4` dans la liste des ports et
 cliquez sur *Connect*.
 
 Sans arguments, le simulateur affiche la liste des ports disponibles.
