@@ -3,38 +3,12 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:converters="clr-namespace:SkopiStation.App.Converters"
              xmlns:viewModels="clr-namespace:SkopiStation.App.ViewModels"
              mc:Ignorable="d"
              d:DataContext="{d:DesignInstance viewModels:PatientListViewModel}"
              d:DesignHeight="600" d:DesignWidth="1000">
 
-    <UserControl.Resources>
-        <converters:OutOfRangeBrushConverter x:Key="OutOfRangeBrush" />
-
-        <Style x:Key="FieldLabel" TargetType="TextBlock">
-            <Setter Property="Opacity" Value="0.6" />
-            <Setter Property="Margin" Value="0,10,0,2" />
-        </Style>
-
-        <!-- Messages published through INotifyDataErrorInfo. They sit in the normal layout flow
-             rather than in a Validation.ErrorTemplate adorner, so they are laid out with the form
-             and remain reachable to accessibility tools. The (Validation.Errors)/ErrorContent
-             syntax binds to the current item of the collection, which yields an empty string
-             instead of a binding failure when the field is valid. -->
-        <Style x:Key="FieldError" TargetType="TextBlock">
-            <Setter Property="Foreground" Value="#C0392B" />
-            <Setter Property="FontSize" Value="11" />
-            <Setter Property="TextWrapping" Value="Wrap" />
-            <Setter Property="Margin" Value="0,2,0,0" />
-            <Style.Triggers>
-                <Trigger Property="Text" Value="">
-                    <Setter Property="Visibility" Value="Collapsed" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-    </UserControl.Resources>
-
+    <!-- OutOfRangeBrush, FieldLabel and FieldError come from Application.Resources in App.xaml. -->
     <Grid Margin="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
