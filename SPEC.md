@@ -28,7 +28,7 @@ Périmètre volontairement réduit : deux écrans, terminés et propres.
 | Framework | .NET 8, WPF |
 | MVVM | `CommunityToolkit.Mvvm` (`ObservableObject`, `RelayCommand`) |
 | ORM | `Microsoft.EntityFrameworkCore.SqlServer` |
-| Base | SQL Server LocalDB |
+| Base | SQL Server Express, instance `.\SQLEXPRESS` (LocalDB ou un conteneur conviennent aussi) |
 | DI / hôte | `Microsoft.Extensions.Hosting` + `Microsoft.Extensions.DependencyInjection` |
 | Série | `System.IO.Ports` |
 | Données de test | `Bogus` |
@@ -82,7 +82,16 @@ Measurement
 
 - Configuration via `IEntityTypeConfiguration<T>`, jamais d'attributs sur les entités
 - Index unique sur `RecordNumber`
-- Migrations générées et **committées** dans le repo
+- Migrations générées et **committées** dans le repo. Pas de
+  `IDesignTimeDbContextFactory` : les outils EF passent par le projet de
+  démarrage `SkopiStation.App`, dont le `CreateHostBuilder` statique expose le
+  conteneur de l'application. La chaîne de connexion vit donc uniquement dans
+  `appsettings.json`, jamais en dur dans le code :
+
+  ```
+  dotnet ef migrations add <Name> --project src/SkopiStation.Data --startup-project src/SkopiStation.App
+  ```
+
 - Seed au premier lancement : ~50 patients et ~300 mesures via Bogus,
   avec un `Seed` fixe **et une date de référence fixe** pour que les données
   soient reproductibles (Bogus calcule les dates relatives depuis
@@ -235,9 +244,16 @@ C'est la pièce que le lecteur verra en premier. Il doit contenir :
 1. **Pourquoi ce projet** — une phrase honnête : transposition d'acquis
    XAML/MVVM issus de .NET MAUI vers WPF, avec intégration d'un appareil de
    mesure via liaison série.
-2. **Comment lancer** — prérequis, LocalDB, migrations, et comment démarrer
-   le simulateur série (mentionner `com0com` pour créer une paire de ports
-   virtuels sous Windows).
+2. **Comment lancer** — prérequis, installation de SQL Server Express et la
+   chaîne de connexion correspondante, migrations, et comment démarrer le
+   simulateur série (mentionner `com0com` pour créer une paire de ports
+   virtuels sous Windows). Donner l'alternative conteneur pour qui préfère
+   ne rien installer :
+
+   ```
+   docker run -e ACCEPT_EULA=Y -e MSSQL_SA_PASSWORD=<motdepasse> \
+     -p 1433:1433 -d mcr.microsoft.com/mssql/server:2022-latest
+   ```
 3. **Décisions d'architecture** — les six points ci-dessus, expliqués en
    deux ou trois phrases chacun. Le *pourquoi*, pas le *comment*. S'y
    ajoutent :
@@ -245,6 +261,8 @@ C'est la pièce que le lecteur verra en premier. Il doit contenir :
      plateforme ; seuls App et Tests dépendent de Windows
    - la distinction valeur impossible / valeur hors plage, et la validation
      de l'unité reçue
+   - le choix de SQL Server Express plutôt que LocalDB ou Docker, et le fait
+     que le provider EF Core est identique dans les trois cas
    - le choix de FluentAssertions 7.2.2 et sa raison (licence)
    - la mention que les plages de référence sont indicatives, choisies pour
      la démonstration, et non cliniquement validées

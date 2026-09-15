@@ -30,6 +30,22 @@ CI sur `windows-latest`.
 
 ## Décisions validées
 
+- **Base de données** : **SQL Server Express** en installation native, instance `.\SQLEXPRESS`.
+  LocalDB a été écarté (aucun paquet winget, installation non scriptable) et Docker aussi
+  (WSL 2 + Docker Desktop = un redémarrage et de l'outillage à configurer, pour zéro gain
+  sur ce que le projet démontre). Le provider EF Core reste `SqlServer` dans les trois cas,
+  donc le choix n'a aucun impact technique. Le README dit « SQL Server Express (ou LocalDB) ».
+- **Chaîne de connexion** : jamais en dur dans le code. Elle vit dans
+  `src/SkopiStation.App/appsettings.json`, sous la clé `ConnectionStrings:SkopiStation`.
+- **Pas de `IDesignTimeDbContextFactory`**. Les migrations se génèrent avec `SkopiStation.App`
+  comme projet de démarrage : les outils EF appellent le `CreateHostBuilder` statique de `App`
+  et résolvent le `DbContext` depuis le conteneur de l'application. Une seule chaîne de
+  connexion, une seule composition.
+
+  ```
+  dotnet ef migrations add <Name> --project src/SkopiStation.Data --startup-project src/SkopiStation.App
+  ```
+
 - **Plages de référence** (indicatives) : pression intraoculaire 10–21 mmHg, longueur axiale 22–25 mm, épaisseur cornéenne 500–600 µm. Définies dans `MeasurementKindExtensions`.
 - **Unité** : `Unit` reste persisté. Chaque `Kind` a une unité canonique (mmHg, mm, µm). Une trame dont l'unité ne correspond pas à l'unité canonique du type (ex. kPa pour une pression) est rejetée avec un log explicite.
 - **Valeur impossible ≠ valeur hors plage** : une valeur physiquement impossible rend la trame invalide (rejetée, journalisée) ; une valeur hors plage clinique est une mesure valide, enregistrable, signalée par `IsOutOfRange`.
@@ -41,6 +57,8 @@ CI sur `windows-latest`.
 
 - Les six critères ci-dessus, le *pourquoi* en deux ou trois phrases chacun.
 - La couche métier (Domain, Data) est en `net8.0`, indépendante de la plateforme ; seuls App et Tests dépendent de Windows.
+- Le choix de SQL Server Express plutôt que LocalDB ou Docker, et le fait que le provider EF Core est le même dans les trois cas. Donner le `docker run` en alternative pour qui préfère un conteneur.
+- L'absence de design-time factory : une seule chaîne de connexion, dans `appsettings.json`. Donner la commande `dotnet ef` exacte.
 - La distinction valeur impossible / valeur hors plage, et la validation de l'unité reçue.
 - La raison du choix de FluentAssertions 7.2.2 (licence).
 - **Obligatoire** : les plages de référence sont indicatives, choisies pour la démonstration, et non cliniquement validées.
