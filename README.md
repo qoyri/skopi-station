@@ -95,6 +95,36 @@ l'élément courant de la collection — évite l'indexation `[0]`, qui produit 
 Les messages étant dans l'arbre visuel plutôt que dans la couche d'adorners, ils
 sont aussi exposés aux outils d'accessibilité.
 
+### Marshalling vers le thread UI : `Dispatcher` plutôt qu'`EnableCollectionSynchronization`
+
+Les mesures arrivent sur un thread de fond — un test le verrouille
+explicitement, pour que la nécessité du marshalling ne devienne pas une
+supposition. Muter une `ObservableCollection` liée depuis ce thread lève une
+exception de cross-thread, et WPF offre deux réponses.
+
+`BindingOperations.EnableCollectionSynchronization` déclare à WPF que la
+collection peut être modifiée depuis d'autres threads et lui donne un verrou à
+prendre pendant ses lectures. Rien n'est marshallé : `CollectionChanged` continue
+d'être levé sur le thread producteur, et c'est la vue qui se synchronise. C'est le
+bon choix quand le débit est élevé et que le coût d'un saut de dispatcher par
+élément compterait. En contrepartie, **chaque** site de mutation doit prendre le
+même verrou — une omission passe inaperçue en test et se manifeste en production —
+et le travail de la vue se fait sur le thread producteur, ce qui se marie mal avec
+le tri, le filtrage et la réentrance.
+
+Le `Dispatcher` a été retenu. Un appareil de mesure émet quelques trames par
+seconde au plus : le coût d'un `InvokeAsync` par mesure est sans objet à cette
+cadence, et l'argument de performance qui justifierait l'autre approche ne
+s'applique pas. En échange, **toutes** les mutations et toutes les notifications
+dérivées se produisent sur le thread UI, ce qui élimine une classe entière de
+problèmes de réentrance au lieu de la déplacer dans une discipline de verrouillage
+qu'il faudrait tenir partout.
+
+Le marshalling passe par une interface `IUiDispatcher`, avec une implémentation
+WPF et une implémentation synchrone dans les tests — un hôte de test unitaire n'a
+pas de `Dispatcher`. L'implémentation WPF exécute l'action en ligne quand elle est
+déjà sur le bon thread, plutôt que de la mettre en file.
+
 ### Valeur impossible et valeur hors plage
 
 Chaque type de mesure porte deux intervalles, qui répondent à deux questions
