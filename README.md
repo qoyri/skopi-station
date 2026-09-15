@@ -31,24 +31,32 @@ fonctionnalités.
 
 ### Liste des patients
 
-Recherche filtrant sur nom, prénom et numéro de dossier via `ICollectionView`,
-tri par clic sur en-tête, détail et historique du patient sélectionné.
-
 ![Liste des patients](docs/screenshots/patients.png)
+
+La recherche `Mar` filtre la liste à trois patients. Le filtrage passe par
+`ICollectionView` : la collection sous-jacente n'est pas reconstruite à chaque
+frappe, la vue se contente de rejouer son filtre. Dans l'historique du patient
+sélectionné, les mesures hors plage de référence sont en rouge — ici 472 et
+479 µm pour une plage 500–600.
 
 ### Validation de l'identité
 
-Numéro de dossier invalide : le message apparaît sous le champ et le bouton
-*Save* reste désactivé tant que le formulaire porte une erreur.
-
 ![Validation du formulaire d'identité](docs/screenshots/validation.png)
+
+Le numéro de dossier a été remplacé par une valeur invalide. Le message est
+rendu dans le flux normal de la mise en page, sous le champ, et non dans un
+adorner `Validation.ErrorTemplate` — c'est la décision décrite plus bas. Le
+bouton *Save* reste désactivé tant que le formulaire porte une erreur.
 
 ### Acquisition
 
-Mesures reçues en direct depuis l'appareil, celles qui sortent de la plage de
-référence signalées en rouge, et rattachement au patient sélectionné.
-
 ![Écran d'acquisition](docs/screenshots/acquisition.png)
+
+Neuf mesures reçues de l'appareil simulé, dont quatre hors plage de référence,
+en rouge. L'indicateur affiche *Not connected* parce que la capture a été prise
+**après une déconnexion volontaire** : les mesures reçues restent dans la liste
+jusqu'à ce qu'elles soient rattachées à un patient, se déconnecter ne les efface
+pas. Le panneau de droite porte le patient sélectionné sur l'onglet Patients.
 
 ## Structure de la solution
 
@@ -259,6 +267,27 @@ l'élément courant de la collection — évite l'indexation `[0]`, qui produit 
 échec de binding dès que le champ redevient valide et que la collection se vide.
 Les messages étant dans l'arbre visuel plutôt que dans la couche d'adorners, ils
 sont aussi exposés aux outils d'accessibilité.
+
+#### Le même piège, une seconde fois : l'adorner du conteneur
+
+Les adorners de validation ont posé problème deux fois, sur deux éléments
+différents. Le premier ne montrait rien alors qu'il aurait dû. Le second montrait
+quelque chose alors qu'il n'aurait pas dû : dès qu'un champ devenait invalide, un
+**trait rouge parasite** apparaissait sur toute la largeur du formulaire, sous le
+bouton *Save*.
+
+L'identification est venue de deux mesures. D'abord, déplacer l'erreur sur un
+autre champ ne déplaçait pas le trait : il ne suivait donc pas le champ fautif.
+Ensuite, ses bornes correspondaient au bas du `StackPanel` du formulaire, pas à
+celles d'un champ. Le conteneur recevait un adorner de validation qui lui était
+propre. `Validation.ErrorTemplate="{x:Null}"` sur ce conteneur le supprime sans
+rien changer au message ni à l'état du bouton, la bordure rouge du champ fautif
+restant en place. Seuls les contrôles de saisie doivent porter un adorner.
+
+Ces deux défauts ont en commun de n'apparaître qu'au rendu. Les tests unitaires
+portent sur les ViewModels et voyaient un `HasErrors` correct dans les deux cas ;
+il a fallu piloter l'interface réelle, puis inspecter les pixels de la capture,
+pour les voir.
 
 ### 5. Un `IValueConverter`
 
