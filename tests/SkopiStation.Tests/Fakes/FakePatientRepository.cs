@@ -12,6 +12,8 @@ internal sealed class FakePatientRepository : IPatientRepository
 
     public List<PatientIdentity> SavedIdentities { get; } = [];
 
+    public List<Measurement> SavedMeasurements { get; } = [];
+
     public PatientSummary Add(string recordNumber, string lastName, string firstName, DateOnly birthDate)
     {
         var summary = new PatientSummary(Guid.NewGuid(), recordNumber, lastName, firstName, birthDate, 0);
@@ -49,6 +51,20 @@ internal sealed class FakePatientRepository : IPatientRepository
     public Task UpdateIdentityAsync(PatientIdentity identity, CancellationToken ct)
     {
         SavedIdentities.Add(identity);
+        return Task.CompletedTask;
+    }
+
+    public Task AddMeasurementAsync(Measurement measurement, CancellationToken ct)
+    {
+        SavedMeasurements.Add(measurement);
+
+        if (!measurements.TryGetValue(measurement.PatientId, out var list))
+        {
+            list = [];
+            measurements[measurement.PatientId] = list;
+        }
+
+        list.Add(measurement);
         return Task.CompletedTask;
     }
 }

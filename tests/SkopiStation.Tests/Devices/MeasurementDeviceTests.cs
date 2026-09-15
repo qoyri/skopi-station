@@ -133,6 +133,32 @@ public class MeasurementDeviceTests
         states.Should().Equal(DeviceState.Connecting, DeviceState.Connected, DeviceState.Disconnected);
     }
 
+    /// <summary>
+    /// Pins down the premise the acquisition ViewModel is built on: readings surface on a thread
+    /// other than the one that asked for the connection. Were this to stop being true, the
+    /// marshalling through IUiDispatcher would look like ceremony rather than a necessity.
+    /// </summary>
+    [Fact]
+    public async Task Readings_surface_on_a_background_thread()
+    {
+        await using var device = new FakeMeasurementDevice(NullLogger<FakeMeasurementDevice>.Instance)
+        {
+            Interval = TimeSpan.FromMilliseconds(10),
+            Script = [ValidPressure],
+        };
+
+        var callingThread = Environment.CurrentManagedThreadId;
+        var raisingThreads = new List<int>();
+        device.MeasurementReceived += (_, _) => raisingThreads.Add(Environment.CurrentManagedThreadId);
+
+        await device.ConnectAsync("FAKE", CancellationToken.None);
+        await Task.Delay(200);
+        await device.DisconnectAsync();
+
+        raisingThreads.Should().NotBeEmpty();
+        raisingThreads.Should().NotContain(callingThread);
+    }
+
     [Fact]
     public async Task The_fake_device_emits_its_script_once_connected()
     {
