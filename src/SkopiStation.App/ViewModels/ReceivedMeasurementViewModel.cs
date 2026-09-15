@@ -11,19 +11,17 @@ public sealed partial class ReceivedMeasurementViewModel(MeasurementFrame frame,
     [ObservableProperty]
     private string? attachedTo;
 
-    public MeasurementFrame Frame { get; } = frame;
-
     public MeasurementSource Source { get; } = source;
 
-    public DateTimeOffset TakenAt => Frame.TakenAt;
+    public DateTimeOffset TakenAt => frame.TakenAt;
 
-    public MeasurementKind Kind => Frame.Kind;
+    public MeasurementKind Kind => frame.Kind;
 
-    public decimal Value => Frame.Value;
+    public decimal Value => frame.Value;
 
-    public string Unit => Frame.Unit;
+    public string Unit => frame.Unit;
 
-    public bool IsOutOfRange => !Frame.Kind.ReferenceRange().Contains(Frame.Value);
+    public bool IsOutOfRange => !frame.Kind.ReferenceRange().Contains(frame.Value);
 
     public bool IsAttached => AttachedTo is not null;
 
@@ -31,10 +29,10 @@ public sealed partial class ReceivedMeasurementViewModel(MeasurementFrame frame,
     {
         Id = Guid.NewGuid(),
         PatientId = patientId,
-        TakenAt = Frame.TakenAt,
-        Kind = Frame.Kind,
-        Value = Frame.Value,
-        Unit = Frame.Unit,
+        TakenAt = frame.TakenAt,
+        Kind = frame.Kind,
+        Value = frame.Value,
+        Unit = frame.Unit,
         Source = Source,
     };
 

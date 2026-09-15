@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    # App and Tests target net8.0-windows, so the whole solution needs a Windows runner.
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          # global.json pins the major version; this installs a matching SDK on the runner.
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore SkopiStation.sln
+
+      - name: Build
+        run: dotnet build SkopiStation.sln --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test SkopiStation.sln --configuration Release --no-build --logger "trx;LogFileName=results.trx"
+
+      - name: Publish test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/TestResults/*.trx'

@@ -19,7 +19,8 @@ public abstract class MeasurementDeviceBase(ILogger logger) : IMeasurementDevice
 
     private string? lastMessage;
 
-    public DeviceState State { get; private set; } = DeviceState.Disconnected;
+    /// <summary>Current state. Consumers follow <see cref="StateChanged"/> rather than poll this.</summary>
+    protected DeviceState State { get; private set; } = DeviceState.Disconnected;
 
     public abstract Task ConnectAsync(string portName, CancellationToken ct);
 
