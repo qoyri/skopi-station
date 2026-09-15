@@ -60,11 +60,11 @@ tools/
 | Projet | Cible |
 |---|---|
 | `SkopiStation.Domain`, `SkopiStation.Data` | `net8.0` — couche métier indépendante de la plateforme |
+| `SkopiStation.Devices`, `tools/SerialSimulator` | `net8.0` — `System.IO.Ports` est multiplateforme |
 | `SkopiStation.App`, `SkopiStation.Tests` | `net8.0-windows` |
 
 La cible reste .NET 8 même si le SDK installé est plus récent. Solution au
-format `.sln`. `SkopiStation.Devices` et `tools/SerialSimulator` sont créés à
-l'étape 3 (pas de projet vide d'ici là).
+format `.sln`.
 
 ---
 

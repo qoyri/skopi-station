@@ -14,7 +14,7 @@ La spécification complète est dans `SPEC.md`. Ce fichier rappelle ce qui ne do
 |---|---|
 | `SkopiStation.Domain`, `SkopiStation.Data` | `net8.0` (C# pur, indépendant de la plateforme) |
 | `SkopiStation.App`, `SkopiStation.Tests` | `net8.0-windows` |
-| `SkopiStation.Devices`, `tools/SerialSimulator` | créés à l'étape 3 |
+| `SkopiStation.Devices`, `tools/SerialSimulator` | `net8.0` (`System.IO.Ports` est multiplateforme) |
 
 La cible reste .NET 8 même si le SDK installé est plus récent. Solution au format `.sln` (pas `.slnx`).
 CI sur `windows-latest`.
