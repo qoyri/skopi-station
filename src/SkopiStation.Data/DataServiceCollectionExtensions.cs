@@ -12,6 +12,7 @@ public static class DataServiceCollectionExtensions
         // threads. Every operation creates its own short-lived context instead.
         services.AddDbContextFactory<SkopiStationDbContext>(options => options.UseSqlServer(connectionString));
         services.AddTransient<DatabaseInitializer>();
+        services.AddSingleton<IPatientRepository, PatientRepository>();
         return services;
     }
 }
