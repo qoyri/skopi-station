@@ -7,7 +7,7 @@
         xmlns:viewModels="clr-namespace:SkopiStation.App.ViewModels"
         mc:Ignorable="d"
         d:DataContext="{d:DesignInstance viewModels:ShellViewModel}"
-        Title="skopi-station" Height="700" Width="1100"
+        Title="skopi-station" Height="720" Width="1150"
         WindowStartupLocation="CenterScreen">
     <DockPanel>
         <Border DockPanel.Dock="Top" Padding="12,10" Background="#F5F5F5">
@@ -17,6 +17,13 @@
             </StackPanel>
         </Border>
 
-        <views:PatientListView DataContext="{Binding Patients}" />
+        <TabControl Margin="8">
+            <TabItem Header="Patients">
+                <views:PatientListView DataContext="{Binding Patients}" />
+            </TabItem>
+            <TabItem Header="Acquisition">
+                <views:AcquisitionView DataContext="{Binding Acquisition}" />
+            </TabItem>
+        </TabControl>
     </DockPanel>
 </Window>

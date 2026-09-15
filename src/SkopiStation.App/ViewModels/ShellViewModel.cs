@@ -10,12 +10,15 @@ namespace SkopiStation.App.ViewModels;
 public sealed partial class ShellViewModel(
     DatabaseInitializer databaseInitializer,
     PatientListViewModel patients,
+    AcquisitionViewModel acquisition,
     ILogger<ShellViewModel> logger) : ObservableObject
 {
     [ObservableProperty]
     private string status = "Starting…";
 
     public PatientListViewModel Patients { get; } = patients;
+
+    public AcquisitionViewModel Acquisition { get; } = acquisition;
 
     public async Task InitializeAsync(CancellationToken ct)
     {

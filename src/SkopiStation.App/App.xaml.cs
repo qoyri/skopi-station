@@ -2,9 +2,11 @@ using System.Windows;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using SkopiStation.App.Threading;
 using SkopiStation.App.ViewModels;
 using SkopiStation.App.Views;
 using SkopiStation.Data;
+using SkopiStation.Devices;
 
 namespace SkopiStation.App;
 
@@ -34,10 +36,15 @@ public partial class App : Application
                     ?? throw new InvalidOperationException(
                         "Connection string 'SkopiStation' is missing from configuration.");
 
+                var deviceMode = context.Configuration.GetValue("Device:Mode", DeviceMode.Serial);
+
                 services.AddSkopiStationData(connectionString);
+                services.AddSkopiStationDevices(deviceMode);
+                services.AddSingleton<IUiDispatcher>(_ => new WpfDispatcher(Current.Dispatcher));
                 services.AddSingleton<ShellViewModel>();
                 services.AddSingleton<PatientListViewModel>();
                 services.AddSingleton<PatientEditorViewModel>();
+                services.AddSingleton<AcquisitionViewModel>();
                 services.AddSingleton<MainWindow>();
             });
 

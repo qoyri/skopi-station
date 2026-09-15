@@ -73,6 +73,27 @@ public sealed partial class PatientListViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Called when the acquisition screen files a measurement: keeps the row count honest and
+    /// refreshes the history if that patient happens to be the one on screen.
+    /// </summary>
+    public async Task MeasurementAddedAsync(Guid patientId, CancellationToken ct)
+    {
+        var patient = patients.FirstOrDefault(candidate => candidate.Id == patientId);
+
+        if (patient is null)
+        {
+            return;
+        }
+
+        patient.MeasurementCount++;
+
+        if (SelectedPatient == patient)
+        {
+            await LoadMeasurementsAsync(patient, ct);
+        }
+    }
+
     partial void OnSearchTextChanged(string value) => PatientsView.Refresh();
 
     partial void OnSelectedPatientChanged(PatientListItemViewModel? value)
