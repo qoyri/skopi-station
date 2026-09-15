@@ -27,6 +27,8 @@ public interface IPatientRepository
     Task<IReadOnlyList<Measurement>> GetMeasurementsAsync(Guid patientId, CancellationToken ct);
 
     Task UpdateIdentityAsync(PatientIdentity identity, CancellationToken ct);
+
+    Task AddMeasurementAsync(Measurement measurement, CancellationToken ct);
 }
 
 /// <summary>
@@ -74,6 +76,15 @@ public sealed class PatientRepository(IDbContextFactory<SkopiStationDbContext> c
         patient.LastName = identity.LastName;
         patient.FirstName = identity.FirstName;
         patient.BirthDate = identity.BirthDate;
+
+        await context.SaveChangesAsync(ct);
+    }
+
+    public async Task AddMeasurementAsync(Measurement measurement, CancellationToken ct)
+    {
+        await using var context = await contextFactory.CreateDbContextAsync(ct);
+
+        context.Measurements.Add(measurement);
 
         await context.SaveChangesAsync(ct);
     }
