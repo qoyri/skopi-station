@@ -44,6 +44,12 @@ public sealed partial class PatientListItemViewModel : ObservableObject
         || FirstName.Contains(term, StringComparison.CurrentCultureIgnoreCase)
         || RecordNumber.Contains(term, StringComparison.CurrentCultureIgnoreCase);
 
+    /// <summary>
+    /// Names the row for accessibility tools: without this, a screen reader announces the type
+    /// name, since that is what the DataGrid exposes for a row.
+    /// </summary>
+    public override string ToString() => $"{FullName} ({RecordNumber})";
+
     public void Apply(PatientIdentity identity)
     {
         RecordNumber = identity.RecordNumber;
