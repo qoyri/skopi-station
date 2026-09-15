@@ -95,6 +95,68 @@ l'élément courant de la collection — évite l'indexation `[0]`, qui produit 
 Les messages étant dans l'arbre visuel plutôt que dans la couche d'adorners, ils
 sont aussi exposés aux outils d'accessibilité.
 
+### Valeur impossible et valeur hors plage
+
+Chaque type de mesure porte deux intervalles, qui répondent à deux questions
+différentes et ne doivent pas être confondus.
+
+`ReferenceRange` est la plage de référence clinique — 10 à 21 mmHg pour la
+pression intraoculaire. Une valeur en dehors est une **mesure valide** : elle est
+enregistrée, et signalée par `IsOutOfRange`. C'est précisément le genre de valeur
+qu'on veut voir, pas jeter.
+
+`PlausibleRange` est l'enveloppe de ce qu'un appareil en état de marche peut
+physiquement rapporter — 1 à 80 mmHg. Une valeur en dehors n'est pas une mesure
+mais une trame corrompue ou un appareil défaillant : elle est **rejetée** par le
+parser, journalisée, et n'atteint jamais la base.
+
+Les deux intervalles sont indicatifs, choisis pour la démonstration.
+
+### Parsing numérique : pourquoi pas `NumberStyles.Number`
+
+Les valeurs des trames sont lues avec
+`NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign`, et non avec le
+`NumberStyles.Number` qu'on écrit par réflexe. `Number` inclut `AllowThousands`,
+et le séparateur de milliers de la culture invariante est **la virgule**. Une
+trame contenant `2,5` est alors lue comme `25` sans la moindre erreur.
+
+Sur une longueur axiale, `25 mm` est physiquement plausible *et* dans la plage de
+référence. La valeur fausse traverse donc toutes les vérifications et se retrouve
+en base, attribuée à un patient, sans rien pour la distinguer d'une mesure
+correcte. C'est plus grave qu'un plantage : un plantage se voit et se corrige,
+une donnée fausse et silencieuse se propage. Un appareil configuré en locale
+française, ou une trame corrompue sur un octet, suffit à la produire.
+
+### Déconnexion série : fermer le port avant d'attendre la boucle
+
+`SerialPort.BaseStream` **n'observe pas le `CancellationToken`**. Annuler le
+jeton puis attendre la boucle de lecture ne suffit donc pas : le `ReadLineAsync`
+en cours reste bloqué jusqu'à ce qu'un octet arrive — c'est-à-dire indéfiniment
+si l'appareil s'est tu ou a été débranché. `DisconnectAsync` gelait, et avec lui
+l'interface au clic sur *Déconnecter*.
+
+`DisconnectAsync` ferme donc le port **avant** d'attendre la boucle : c'est la
+fermeture qui avorte la lecture en cours et permet à la boucle de se terminer.
+La boucle traite l'erreur d'entrée-sortie qui en résulte comme une sortie normale
+dès lors que l'annulation a été demandée, faute de quoi un arrêt volontaire
+laisserait l'appareil en état `Faulted`.
+
+### Ce qui n'est pas couvert par les tests
+
+L'**ouverture du port série lui-même** n'est pas testée automatiquement : cela
+demanderait une paire de ports virtuels (`com0com` sous Windows), donc un pilote
+et une installation privilégiée sur la machine de test comme sur le runner de CI.
+
+Le contournement tient en deux parties. La boucle de lecture — qui porte
+l'essentiel de la logique : découpage en lignes, rejet des trames invalides,
+annulation — est exercée sur un `TextReader` via un `PumpingDevice` défini dans
+le projet de tests, qui dérive de `MeasurementDeviceBase` et emprunte exactement
+le même `PumpAsync` que l'implémentation série. Le reste — ouverture réelle,
+échec sur un port inexistant, déconnexion sans blocage — a été vérifié
+manuellement avec un harnais jetable contre le port `COM1` de la machine de
+développement. C'est d'ailleurs ce harnais qui a révélé le blocage décrit
+ci-dessus, qu'aucun test unitaire n'aurait vu.
+
 ## Tests
 
 ```
